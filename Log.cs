@@ -106,7 +106,7 @@ public static class Log
     {
         var hash = MD5.HashData(Encoding.UTF8.GetBytes(str));
         var bytes = BitConverter.GetBytes(BitConverter.ToUInt32(hash));
-        var color = Color.FromArgb(0xFF, bytes[0], bytes[1], bytes[2]).WithMinBrightness(2.5);
+        var color = Color.FromArgb(0xFF, bytes[0], bytes[1], bytes[2]).WithMinBrightness(0.85);
         return color;
     }
 }
