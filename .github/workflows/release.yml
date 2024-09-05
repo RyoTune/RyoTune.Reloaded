@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*.*.*'
+env:
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
+  RELEASE_TAG: ${{ github.ref_name }}
+  PROJECT_NAME: RyoTune.Reloaded
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+      
+    - name: Setup AutoChangelog
+      run: npm install -g auto-changelog
+
+    - name: Create Changelog
+      run: |
+        if [ $IS_RELEASE = 'true' ]; then
+          auto-changelog --sort-commits date --hide-credit --template .github/changelog.hbs --commit-limit false --starting-version $RELEASE_TAG
+        else
+          auto-changelog --sort-commits date --hide-credit --template .github/changelog.hbs --commit-limit false --unreleased
+        fi
+        
+    - name: Build
+      run: |
+        if [ $IS_RELEASE = 'true' ]; then
+          dotnet publish $PROJECT_NAME -c Release -o build /p:Version=$RELEASE_TAG
+          dotnet nuget push "build/*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json
+        else
+          dotnet publish $PROJECT_NAME -c Release -o build
+        fi
+
+    - name: Zip Build
+      run: |
+        cd build
+        zip -r ../$PROJECT_NAME.zip .
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: |
+          $PROJECT_NAME.zip
+          CHANGELOG.md
+        retention-days: 0
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: CHANGELOG.md
+        files: $PROJECT_NAME.zip
