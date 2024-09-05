@@ -39,7 +39,8 @@ jobs:
       run: |
         if [ $IS_RELEASE = 'true' ]; then
           dotnet publish $PROJECT_NAME.csproj -c Release -o build /p:Version=$RELEASE_TAG
-          dotnet nuget push "build/*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json
+          dotnet pack -c Release --no-build --output .
+          dotnet nuget push "*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json
         else
           dotnet publish $PROJECT_NAME.csproj -c Release -o build
         fi
@@ -48,15 +49,13 @@ jobs:
       run: |
         cd build
         zip -r ../$PROJECT_NAME.zip .
-        cd ..
-        ls -R
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: build
         path: |
-          $PROJECT_NAME.zip
+          ${{env.PROJECT_NAME}}.zip
           CHANGELOG.md
         retention-days: 0
 
@@ -65,4 +64,4 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         body_path: CHANGELOG.md
-        files: $PROJECT_NAME.zip
+        files: ${{env.PROJECT_NAME}}.zip
