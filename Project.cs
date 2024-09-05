@@ -11,9 +11,9 @@ public static class Project
         ScanHooks.Init(modLoader);
     }
 
-    public static void Init(IModConfig mod, IModLoader modLoader, ILogger log, Color color, bool useAsyncLog = false)
+    public static void Init(IModConfig modConfig, IModLoader modLoader, ILogger log, Color color, bool useAsyncLog = false)
     {
-        Log.Init(mod.ModId, log, color, useAsyncLog);
+        Log.Init(modConfig.ModId, log, color, useAsyncLog);
         ScanHooks.Init(modLoader);
     }
 }
