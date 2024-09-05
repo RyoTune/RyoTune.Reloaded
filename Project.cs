@@ -5,9 +5,9 @@ namespace RyoTune.Reloaded;
 
 public static class Project
 {
-    public static void Init(IModConfig mod, IModLoader modLoader, ILogger log, bool useAsyncLog = false)
+    public static void Init(IModConfig modConfig, IModLoader modLoader, ILogger log, bool useAsyncLog = false)
     {
-        Log.Init(mod.ModId, log, useAsyncLog);
+        Log.Init(modConfig.ModId, log, useAsyncLog);
         ScanHooks.Init(modLoader);
     }
 
