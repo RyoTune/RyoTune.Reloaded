@@ -48,6 +48,8 @@ jobs:
       run: |
         cd build
         zip -r ../$PROJECT_NAME.zip .
+        cd ..
+        ls -R
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
