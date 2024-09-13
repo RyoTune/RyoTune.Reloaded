@@ -43,7 +43,7 @@ public static class IStartupScannerExtensions
             }
 
             var address = Utilities.BaseAddress + result.Offset;
-            Log.Information($"{name} found at: {address:X}");
+            Log.Information($"{name} found at: 0x{address:X}");
             callback(address);
         });
     }
@@ -66,7 +66,7 @@ public static class IStartupScannerExtensions
             var address = Utilities.BaseAddress + result.Offset;
             var function = hooks.CreateFunction<T>(address);
 
-            Log.Information($"{name} found at: {address:X}");
+            Log.Information($"{name} found at: 0x{address:X}");
             callback(function);
         });
     }

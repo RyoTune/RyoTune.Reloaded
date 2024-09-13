@@ -5,15 +5,25 @@ namespace RyoTune.Reloaded;
 
 public static class Project
 {
+    private static IModLoader? _modLoader;
+
     public static void Init(IModConfig modConfig, IModLoader modLoader, ILogger log, bool useAsyncLog = false)
     {
         Log.Init(modConfig.ModId, log, useAsyncLog);
-        ScanHooks.Init(modLoader);
+        _modLoader = modLoader;
     }
 
     public static void Init(IModConfig modConfig, IModLoader modLoader, ILogger log, Color color, bool useAsyncLog = false)
     {
         Log.Init(modConfig.ModId, log, color, useAsyncLog);
-        ScanHooks.Init(modLoader);
+        _modLoader = modLoader;
+    }
+
+    public static void Start()
+    {
+        if (_modLoader != null)
+        {
+            ScanHooks.Init(_modLoader);
+        }
     }
 }
