@@ -41,7 +41,7 @@ jobs:
         if [ $IS_RELEASE = 'true' ]; then
           dotnet publish $PROJECT_NAME.csproj -c Release -o build /p:Version=$RELEASE_TAG
           dotnet pack -c Release /p:Version=$RELEASE_TAG --no-build --output .
-          dotnet nuget push "*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push "*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json --skip-duplicate
         else
           dotnet publish $PROJECT_NAME.csproj -c Release -o build
         fi
