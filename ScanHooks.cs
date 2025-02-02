@@ -4,9 +4,12 @@ using Reloaded.Mod.Interfaces;
 
 namespace RyoTune.Reloaded;
 
+/// <summary>
+/// Utility class for pattern scanning and hooking with <see cref="IReloadedHooks"/>.
+/// </summary>
 public static class ScanHooks
 {
-    private static readonly List<ScanHook> scans = [];
+    private static readonly List<ScanResult> scans = [];
     private static readonly List<ScanListener> listeners = [];
 
     /// <summary>
@@ -27,6 +30,10 @@ public static class ScanHooks
     public static void Listen(string name, Action<IReloadedHooks, nint> success)
         => listeners.Add(new(name, success));
 
+    /// <summary>
+    /// Initialize core functionality.
+    /// </summary>
+    /// <param name="modLoader">Modloader instance.</param>
     public static void Init(IModLoader modLoader)
     {
         modLoader.GetController<IStartupScanner>().TryGetTarget(out var scanner);
@@ -34,7 +41,7 @@ public static class ScanHooks
         Init(scanner!, hooks!);
     }
 
-    public static void Init(IStartupScanner scanner, IReloadedHooks hooks)
+    private static void Init(IStartupScanner scanner, IReloadedHooks hooks)
     {
         foreach (var scan in scans)
         {
@@ -55,7 +62,7 @@ public static class ScanHooks
         }
     }
 
-    private record ScanHook(string Name, string? Pattern, Action<IReloadedHooks, nint> Success);
+    private record ScanResult(string Name, string? Pattern, Action<IReloadedHooks, nint> Success);
 
     private record ScanListener(string Name, Action<IReloadedHooks, nint> Success);
 }
