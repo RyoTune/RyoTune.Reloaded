@@ -5,11 +5,17 @@ Common functionality for Reloaded mods.
 1. Install `RyoTune.Reloaded` using `Nuget`.
 2. Create or add to a `GlobalUsings.cs` file the following: `global using RyoTune.Reloaded`
 3. In your `Mod.cs` constructor, initialize functionality with: `Project.Init(IModConfig, IModLoader, ILogger)`
+4. At the end of the constructor, add `Project.Start();`.
 
 Optionally, you can also manually set the color for `Information` log messages and whether to use async logging.
 
+## SHFunction
+`SHFunction` simplifies creating a function hook from `ScanHook`.
+
+`IHook<TFunction> myHook = new SHFunction<TFunction>(TFunction function, string pattern)`
+
 ## ScanHooks
-`ScanHooks` streamlines adding sigscans and creating a hook if found.
+`ScanHooks` streamlines adding sigscans and creating a hook from a successful result.
 
 `ScanHooks.Add(string name, string? pattern, Action<IReloadedHooks, nint> success)`
 - `name` is the name of the scan, similar to an ID. Used for logging and by listeners.
