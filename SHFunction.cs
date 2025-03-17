@@ -3,12 +3,15 @@
 namespace RyoTune.Reloaded;
 
 /// <summary>
-/// <see cref="IHook"/> instance that eventually creates the actual hook from a <see cref="ScanHooks"/> result.
+/// Creates a hook or wrapper from a <see cref="ScanHooks"/> result.
 /// </summary>
 /// <typeparam name="TFunction">Function.</typeparam>
-public class SHFunction<TFunction> : IHook<TFunction>
+public class SHFunction<TFunction>
 {
     private IHook<TFunction>? _hook;
+    private TFunction? _wrapper;
+    private nint _wrapperAddress;
+    private readonly string _name;
 
     /// <summary>
     /// <see cref="ScanHooks"/> function hook.
@@ -16,32 +19,53 @@ public class SHFunction<TFunction> : IHook<TFunction>
     /// <param name="function">Hook function.</param>
     /// <param name="pattern">Function pattern.</param>
     public SHFunction(TFunction function, string pattern)
-        => ScanHooks.Add(typeof(TFunction).Name, pattern, (hooks, result) => _hook = hooks.CreateHook(function, result).Activate());
+    {
+        _name = typeof(TFunction).Name;
+        ScanHooks.Add(_name, pattern, (hooks, result) => _hook = hooks.CreateHook(function, result).Activate());
+    }
 
-    /// <inheritdoc/>
-    public TFunction OriginalFunction => _hook!.OriginalFunction;
+    /// <summary>
+    /// <see cref="ScanHooks"/> function wrapper.
+    /// </summary>
+    /// <param name="pattern">Function pattern.</param>
+    public SHFunction(string pattern)
+    {
+        _name = typeof(TFunction).Name;
+        ScanHooks.Add(_name, pattern, (hooks, result) => _wrapper = hooks.CreateWrapper<TFunction>(result, out _));
+    }
 
-    /// <inheritdoc/>
-    public IReverseWrapper<TFunction> ReverseWrapper => _hook!.ReverseWrapper;
+    /// <summary>
+    /// Original function wrapper.
+    /// </summary>
+    public TFunction OriginalFunction => _wrapper ?? _hook!.OriginalFunction;
 
-    /// <inheritdoc/>
-    public bool IsHookEnabled => _hook!.IsHookEnabled;
+    /// <summary>
+    /// Disable function hook, if exists.
+    /// </summary>
+    public void Disable()
+    {
+        if (_hook != null)
+        {
+            _hook?.Disable();
+        }
+        else
+        {
+            Log.Warning($"{nameof(SHFunction<TFunction>)}<{_name}> is a wrapper and can not be disabled.");
+        }
+    }
 
-    /// <inheritdoc/>
-    public bool IsHookActivated => _hook!.IsHookActivated;
-
-    /// <inheritdoc/>
-    public nint OriginalFunctionAddress => _hook!.OriginalFunctionAddress;
-
-    /// <inheritdoc/>
-    public nint OriginalFunctionWrapperAddress => _hook!.OriginalFunctionWrapperAddress;
-
-    /// <inheritdoc/>
-    public IHook<TFunction> Activate() => throw new NotImplementedException("Hook is activated once ready, do not call manually.");
-
-    /// <inheritdoc/>
-    public void Disable() => _hook!.Disable();
-
-    /// <inheritdoc/>
-    public void Enable() => _hook!.Enable();
+    /// <summary>
+    /// Enable function hook, if exists.
+    /// </summary>
+    public void Enable()
+    {
+        if (_hook != null)
+        {
+            _hook?.Enable();
+        }
+        else
+        {
+            Log.Warning($"{nameof(SHFunction<TFunction>)}<{_name}> is a wrapper and can not be enabled.");
+        }
+    }
 }
