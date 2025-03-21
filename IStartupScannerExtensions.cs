@@ -1,73 +1,64 @@
-﻿using Reloaded.Hooks.Definitions;
-using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
+﻿using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 
 namespace RyoTune.Reloaded;
 
+/// <summary>
+/// <see cref="IStartupScanner"/> extension methods.
+/// </summary>
 public static class IStartupScannerExtensions
 {
-    public static void Scan<T>(
-        this IStartupScanner scanner,
-        IReloadedHooks hooks,
-        string name,
-        string pattern,
-        out IFunction<T>? function)
-    {
-        IFunction<T>? innerFunction = default;
-        scanner.AddMainModuleScan(pattern, result =>
-        {
-            if (!result.Found)
-            {
-                Log.Error($"Failed to find pattern for {name}. Pattern: {pattern}");
-                return;
-            }
-
-            var address = Utilities.BaseAddress + result.Offset;
-            innerFunction = hooks.CreateFunction<T>(address);
-        });
-
-        function = innerFunction;
-    }
-
+    /// <summary>
+    /// Basic pattern scan with logging and callback to execute with successful result.
+    /// </summary>
+    /// <param name="scanner">Scanner.</param>
+    /// <param name="name">Scan name for logs.</param>
+    /// <param name="pattern">Scan pattern.</param>
+    /// <param name="onSuccess">Callback which is given the result on success.</param>
     public static void Scan(
         this IStartupScanner scanner,
         string name,
         string pattern,
-        Action<nint> callback)
+        Action<nint> onSuccess)
     {
         scanner.AddMainModuleScan(pattern, result =>
         {
             if (!result.Found)
             {
-                Log.Error($"Failed to find pattern for {name}. Pattern: {pattern}");
+                Log.Error($"Failed to find pattern for \"{name}\". Pattern: {pattern}");
                 return;
             }
 
             var address = Utilities.BaseAddress + result.Offset;
-            Log.Information($"{name} found at: 0x{address:X}");
-            callback(address);
+            Log.Information($"\"{name}\" found at: 0x{address:X}");
+            onSuccess(address);
         });
     }
 
-    public static void FunctionScan<T>(
+    /// <summary>
+    /// Pattern scan with no logging and success and failure callbacks, for more control.
+    /// </summary>
+    /// <param name="scanner">Scanner.</param>
+    /// <param name="name">Scan name for logs.</param>
+    /// <param name="pattern">Scan pattern.</param>
+    /// <param name="onSuccess">Callback which is given the scan result on success.</param>
+    /// <param name="onFailure">Callback which is run on scan failure.</param>
+    public static void Scan(
         this IStartupScanner scanner,
-        IReloadedHooks hooks,
         string name,
         string pattern,
-        Action<IFunction<T>> callback)
+        Action<nint> onSuccess,
+        Action onFailure)
     {
         scanner.AddMainModuleScan(pattern, result =>
         {
             if (!result.Found)
             {
-                Log.Error($"Failed to find pattern for {name}. Pattern: {pattern}");
+                onFailure();
                 return;
             }
 
             var address = Utilities.BaseAddress + result.Offset;
-            var function = hooks.CreateFunction<T>(address);
-
-            Log.Information($"{name} found at: 0x{address:X}");
-            callback(function);
+            onSuccess(address);
         });
     }
 }
