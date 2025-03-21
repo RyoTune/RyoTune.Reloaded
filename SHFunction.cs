@@ -10,7 +10,6 @@ public class SHFunction<TFunction>
 {
     private IHook<TFunction>? _hook;
     private TFunction? _wrapper;
-    private nint _wrapperAddress;
     private readonly string _name;
 
     /// <summary>
