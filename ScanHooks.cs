@@ -1,6 +1,8 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 using Reloaded.Mod.Interfaces;
+using RyoTune.Reloaded.Scans.Models;
+using System.Xml.Serialization;
 
 namespace RyoTune.Reloaded;
 
@@ -9,60 +11,88 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class ScanHooks
 {
-    private static readonly List<ScanResult> scans = [];
-    private static readonly List<ScanListener> listeners = [];
+    private static readonly XmlSerializer patternsSerializer = new(typeof(ScanPatterns));
 
-    /// <summary>
-    /// Add a new a scan hook.
-    /// </summary>
-    /// <param name="name">Name of scan.</param>
-    /// <param name="pattern">Pattern to scan for.</param>
-    /// <param name="success">Success action with hooks and result.</param>
-    public static void Add(string name, string? pattern, Action<IReloadedHooks, nint> success)
-        => scans.Add(new(name, pattern, success));
+    private static readonly List<ScanListener> _listeners = [];
+    private static readonly Dictionary<string, string> _scanPatterns = [];
 
-    /// <summary>
-    /// Add a listener for an existing scan. Listeners only need the name
-    /// of the scan and are given the result and hooks if found.
-    /// </summary>
-    /// <param name="name">Name of scan.</param>
-    /// <param name="success">Success action with result.</param>
-    public static void Listen(string name, Action<IReloadedHooks, nint> success)
-        => listeners.Add(new(name, success));
+    private static IReloadedHooks? _hooks;
+    private static IStartupScanner? _scanner;
 
-    /// <summary>
-    /// Initialize core functionality.
-    /// </summary>
-    /// <param name="modLoader">Modloader instance.</param>
-    public static void Init(IModLoader modLoader)
+    internal static void Initialize(IModLoader modLoader)
     {
-        modLoader.GetController<IStartupScanner>().TryGetTarget(out var scanner);
-        modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
-        Init(scanner!, hooks!);
+        modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks);
+        modLoader.GetController<IStartupScanner>().TryGetTarget(out _scanner);
     }
 
-    private static void Init(IStartupScanner scanner, IReloadedHooks hooks)
+    internal static void RegisterPatterns(string patternsMod, string patternsFile)
     {
-        foreach (var scan in scans)
+        try
         {
-            if (string.IsNullOrEmpty(scan.Pattern))
-            {
-                Log.Verbose($"{scan.Name}: No pattern given.");
-                continue;
-            }
+            using var fs = File.OpenRead(patternsFile);
+            var patterns = (ScanPatterns?)patternsSerializer.Deserialize(fs) ?? throw new Exception();
 
-            scanner.Scan(scan.Name, scan.Pattern, result =>
+            foreach (var item in patterns.Where(x => x.ModId == Project.Id))
             {
-                scan.Success(hooks, result);
-                foreach (var item in listeners.Where(x => x.Name == scan.Name).ToArray())
-                {
-                    item.Success.Invoke(hooks, result);
-                }
-            });
+                Add(item.ScanId, item.Pattern);
+                Log.Information($"Registered Scan Pattern || Mod: {Project.Name} || Scan: {item.ScanId} || From: {patternsMod}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"Failed to register patterns from file.\nFile: {patternsFile}");
         }
     }
 
-    private record ScanResult(string Name, string? Pattern, Action<IReloadedHooks, nint> Success);
+    /// <summary>
+    /// Add a scan with the given Scan ID.
+    /// </summary>
+    /// <param name="scanId">Scan ID.</param>
+    /// <param name="pattern">Scan pattern.</param>
+    public static void Add(string scanId, string pattern)
+    {
+        _scanner!.Scan(scanId, pattern, result => OnScanSuccess(scanId, pattern, result), () => OnScanFailure(scanId, pattern));
+        _scanPatterns[scanId] = pattern;
+    }
 
-    private record ScanListener(string Name, Action<IReloadedHooks, nint> Success);
+    /// <summary>
+    /// Add a scan with the given Scan ID.
+    /// </summary>
+    /// <param name="scanId">Scan ID.</param>
+    /// <param name="pattern">Pattern to scan for.</param>
+    /// <param name="onSuccess">Callback given result and hooks, on success.</param>
+    public static void Add(string scanId, string pattern, Action<IReloadedHooks, nint> onSuccess)
+    {
+        Add(scanId, pattern);
+        _listeners.Add(new ScanListener(scanId, result => onSuccess(_hooks!, result)));
+    }
+
+    /// <summary>
+    /// Add a listener for the given Scan ID.
+    /// </summary>
+    /// <param name="scanId">Scan ID.</param>
+    /// <param name="success">Success action with result.</param>
+    public static void Listen(string scanId, Action<IReloadedHooks, nint> success) => _listeners.Add(new ScanListener(scanId, result => success(_hooks!, result)));
+
+    private static void OnScanSuccess(string scanId, string pattern, nint result)
+    {
+        // Ignore if scan was not for the latest pattern of Scan ID.
+        if (_scanPatterns[scanId] != pattern) return;
+
+        Log.Information($"\"{scanId}\" found at: 0x{result:X}");
+
+        var scanListeners = _listeners.Where(x => x.ScanId == scanId).ToArray();
+        foreach (var listener in scanListeners)
+        {
+            listener.OnSuccess(result);
+        }
+    }
+
+    private static void OnScanFailure(string scanId, string pattern)
+    {
+        // Only log as failure if it's the current pattern for the Scan ID.
+        if (_scanPatterns[scanId] == pattern) Log.Error($"Failed to find pattern for \"{scanId}\". Pattern: {pattern}");
+    }
+
+    private record ScanListener(string ScanId, Action<nint> OnSuccess);
 }
