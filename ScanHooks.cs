@@ -1,8 +1,7 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 using Reloaded.Mod.Interfaces;
-using RyoTune.Reloaded.Scans.Models;
-using System.Xml.Serialization;
+using RyoTune.Reloaded.Common;
 
 namespace RyoTune.Reloaded;
 
@@ -11,8 +10,6 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class ScanHooks
 {
-    private static readonly XmlSerializer patternsSerializer = new(typeof(ScanPatterns));
-
     private static readonly List<ScanListener> _listeners = [];
     private static readonly Dictionary<string, string> _scanPatterns = [];
 
@@ -29,13 +26,14 @@ public static class ScanHooks
     {
         try
         {
-            using var fs = File.OpenRead(patternsFile);
-            var patterns = (ScanPatterns?)patternsSerializer.Deserialize(fs) ?? throw new Exception();
+            var data = IniParsing.Instance.ReadFile(patternsFile);
+            var patterns = data.Sections.FirstOrDefault(x => x.SectionName == Project.Id);
+            if (patterns == null) return;
 
-            foreach (var item in patterns.Where(x => x.ModId == Project.Id))
+            foreach (var item in patterns.Keys)
             {
-                Add(item.ScanId, item.Pattern);
-                Log.Information($"Registered Scan Pattern || Mod: {Project.Name} || Scan: {item.ScanId} || From: {patternsMod}");
+                Add(item.KeyName, item.Value);
+                Log.Information($"Registered Pattern || Scan: {item.KeyName} || From: {patternsMod}");
             }
         }
         catch (Exception ex)

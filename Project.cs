@@ -66,7 +66,7 @@ public static class Project
         var modDir = _modLoader.GetDirectoryForModId(config.ModId);
         var projectDir = Path.Join(modDir, "Project");
 
-        var patternsFile = Path.Join(projectDir, "scan-patterns.xml");
+        var patternsFile = Path.Join(projectDir, "scan-patterns.ini");
         if (File.Exists(patternsFile)) ScanHooks.RegisterPatterns(config.ModName, patternsFile);
     }
 }
