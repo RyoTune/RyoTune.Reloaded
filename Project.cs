@@ -11,15 +11,11 @@ public static class Project
 {
     private static IModLoader? _modLoader;
 
-    /// <summary>
-    /// Project ID.
-    /// </summary>
-    public static string? Id { get; private set; }
+    internal static string? Id { get; private set; }
 
-    /// <summary>
-    /// Project name.
-    /// </summary>
-    public static string? Name { get; private set; }
+    internal static string? Name { get; private set; }
+
+    internal static string? Folder { get; private set; }
 
     /// <summary>
     /// Initialize project functionality.
@@ -50,12 +46,13 @@ public static class Project
 
     private static void InitInternal(IModConfig modConfig, IModLoader modLoader)
     {
-        ScanHooks.Initialize(modLoader);
-
         _modLoader = modLoader;
+
         Id = modConfig.ModId;
         Name = modConfig.ModName;
+        Folder = Path.Join(modLoader.GetDirectoryForModId(modConfig.ModId), "Project");
 
+        ScanHooks.Initialize(modLoader);
         modLoader.ModLoaded += OnModLoaded;
     }
 
@@ -66,7 +63,7 @@ public static class Project
         var modDir = _modLoader.GetDirectoryForModId(config.ModId);
         var projectDir = Path.Join(modDir, "Project");
 
-        var patternsFile = Path.Join(projectDir, "scan-patterns.ini");
+        var patternsFile = Path.Join(projectDir, ScanHooks.PATTERNS_FILE);
         if (File.Exists(patternsFile)) ScanHooks.RegisterPatterns(config.ModName, patternsFile);
     }
 }

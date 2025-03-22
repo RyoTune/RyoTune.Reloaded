@@ -10,8 +10,11 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class ScanHooks
 {
+    internal const string PATTERNS_FILE = "scan-patterns.ini";
+
     private static readonly List<ScanListener> _listeners = [];
-    private static readonly Dictionary<string, string> _scanPatterns = [];
+    private static readonly Dictionary<string, string> _latestPatterns = [];
+    private static Dictionary<string, string> _localPatterns = [];
 
     private static IReloadedHooks? _hooks;
     private static IStartupScanner? _scanner;
@@ -20,25 +23,21 @@ public static class ScanHooks
     {
         modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks);
         modLoader.GetController<IStartupScanner>().TryGetTarget(out _scanner);
+
+        var localPatternsFile = Path.Join(Project.Folder, PATTERNS_FILE);
+        if (File.Exists(localPatternsFile))
+        {
+            _localPatterns = ParsePatternsFile(localPatternsFile);
+        }
     }
 
     internal static void RegisterPatterns(string patternsMod, string patternsFile)
     {
-        try
+        var patterns = ParsePatternsFile(patternsFile);
+        foreach (var item in patterns)
         {
-            var data = IniParsing.Instance.ReadFile(patternsFile);
-            var patterns = data.Sections.FirstOrDefault(x => x.SectionName == Project.Id);
-            if (patterns == null) return;
-
-            foreach (var item in patterns.Keys)
-            {
-                Add(item.KeyName, item.Value);
-                Log.Information($"Registered Pattern || Scan: {item.KeyName} || From: {patternsMod}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, $"Failed to register patterns from file.\nFile: {patternsFile}");
+            Add(item.Key, item.Value, false);
+            Log.Information($"Registered Pattern || Scan: {item.Key} || From: {patternsMod}");
         }
     }
 
@@ -47,11 +46,7 @@ public static class ScanHooks
     /// </summary>
     /// <param name="scanId">Scan ID.</param>
     /// <param name="pattern">Scan pattern.</param>
-    public static void Add(string scanId, string pattern)
-    {
-        _scanner!.Scan(scanId, pattern, result => OnScanSuccess(scanId, pattern, result), () => OnScanFailure(scanId, pattern));
-        _scanPatterns[scanId] = pattern;
-    }
+    public static void Add(string scanId, string pattern) => Add(scanId, pattern, true);
 
     /// <summary>
     /// Add a scan with the given Scan ID.
@@ -61,7 +56,7 @@ public static class ScanHooks
     /// <param name="onSuccess">Callback given result and hooks, on success.</param>
     public static void Add(string scanId, string pattern, Action<IReloadedHooks, nint> onSuccess)
     {
-        Add(scanId, pattern);
+        Add(scanId, pattern, true);
         _listeners.Add(new ScanListener(scanId, result => onSuccess(_hooks!, result)));
     }
 
@@ -72,10 +67,25 @@ public static class ScanHooks
     /// <param name="success">Success action with result.</param>
     public static void Listen(string scanId, Action<IReloadedHooks, nint> success) => _listeners.Add(new ScanListener(scanId, result => success(_hooks!, result)));
 
+    /// <summary>
+    /// Add a scan with the given Scan ID.
+    /// </summary>
+    /// <param name="scanId">Scan ID.</param>
+    /// <param name="pattern">Scan pattern.</param>
+    /// <param name="allowLocalOverride">Allow a locally provided pattern to override the given <paramref name="pattern"/>.</param>
+    private static void Add(string scanId, string pattern, bool allowLocalOverride)
+    {
+        // Prefer using a pattern provided by the mod project in: MOD_FOLDER/Project/scan-patterns.ini
+        if (allowLocalOverride && _localPatterns.TryGetValue(scanId, out var newPattern)) pattern = newPattern;
+
+        _scanner!.Scan(scanId, pattern, result => OnScanSuccess(scanId, pattern, result), () => OnScanFailure(scanId, pattern));
+        _latestPatterns[scanId] = pattern;
+    }
+
     private static void OnScanSuccess(string scanId, string pattern, nint result)
     {
         // Ignore if scan was not for the latest pattern of Scan ID.
-        if (_scanPatterns[scanId] != pattern) return;
+        if (_latestPatterns[scanId] != pattern) return;
 
         Log.Information($"\"{scanId}\" found at: 0x{result:X}");
 
@@ -89,7 +99,25 @@ public static class ScanHooks
     private static void OnScanFailure(string scanId, string pattern)
     {
         // Only log as failure if it's the current pattern for the Scan ID.
-        if (_scanPatterns[scanId] == pattern) Log.Error($"Failed to find pattern for \"{scanId}\". Pattern: {pattern}");
+        if (_latestPatterns[scanId] == pattern) Log.Error($"Failed to find pattern for \"{scanId}\". Pattern: {pattern}");
+    }
+
+    private static Dictionary<string, string> ParsePatternsFile(string file)
+    {
+        try
+        {
+            var data = IniParsing.Instance.ReadFile(file);
+            var patterns = data.Sections.FirstOrDefault(x => x.SectionName == Project.Id);
+            if (patterns == null) return [];
+
+            return patterns.Keys.ToDictionary(x => x.KeyName, x => x.Value);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"Failed to load patterns from file.\nFile: {file}");
+        }
+
+        return [];
     }
 
     private record ScanListener(string ScanId, Action<nint> OnSuccess);
