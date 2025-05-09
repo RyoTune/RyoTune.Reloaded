@@ -3,68 +3,54 @@
 namespace RyoTune.Reloaded;
 
 /// <summary>
-/// Creates a hook or wrapper from a <see cref="ScanHooks"/> result.
+/// Create a hook and/or wrapper from a <see cref="ScanHooks"/> result.
 /// </summary>
 /// <typeparam name="TFunction">Function.</typeparam>
 public class SHFunction<TFunction>
 {
-    private IHook<TFunction>? _hook;
-    private TFunction? _wrapper;
     private readonly string _name;
-
+    private IFunction<TFunction>? _function;
+    private TFunction? _hookFunction;
+    
     /// <summary>
-    /// <see cref="ScanHooks"/> function hook.
+    /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,
+    /// and the option to set a hook separately with <see cref="SetHook"/>.
     /// </summary>
-    /// <param name="function">Hook function.</param>
-    /// <param name="pattern">Function pattern.</param>
-    public SHFunction(TFunction function, string pattern)
-    {
-        _name = typeof(TFunction).Name;
-        ScanHooks.Add(_name, pattern, (hooks, result) => _hook = hooks.CreateHook(function, result).Activate());
-    }
-
-    /// <summary>
-    /// <see cref="ScanHooks"/> function wrapper.
-    /// </summary>
-    /// <param name="pattern">Function pattern.</param>
+    /// <param name="pattern">Sig pattern of function.</param>
     public SHFunction(string pattern)
     {
         _name = typeof(TFunction).Name;
-        ScanHooks.Add(_name, pattern, (hooks, result) => _wrapper = hooks.CreateWrapper<TFunction>(result, out _));
+        
+        ScanHooks.Add(_name, pattern, (hooks, result) =>
+        {
+            _function = hooks.CreateFunction<TFunction>(result);
+            if (_hookFunction != null) Hook = _function.Hook(_hookFunction).Activate();
+        });
     }
+    
+    /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with both a function wrapper
+    /// and function hook.
+    /// </summary>
+    /// <param name="hookFunction">Hook function.</param>
+    /// <param name="pattern">Sig pattern of function.</param>
+    public SHFunction(TFunction hookFunction, string pattern) : this(pattern)
+        => _hookFunction = hookFunction;
 
     /// <summary>
-    /// Original function wrapper.
+    /// <see cref="IReloadedHooks"/> instance, if a hook function was set.
     /// </summary>
-    public TFunction OriginalFunction => _wrapper ?? _hook!.OriginalFunction;
+    public IHook<TFunction>? Hook { get; private set; }
 
     /// <summary>
-    /// Disable function hook, if exists.
+    /// Function wrapper for calling the native function.
     /// </summary>
-    public void Disable()
-    {
-        if (_hook != null)
-        {
-            _hook?.Disable();
-        }
-        else
-        {
-            Log.Warning($"{nameof(SHFunction<TFunction>)}<{_name}> is a wrapper and can not be disabled.");
-        }
-    }
-
+    public TFunction Wrapper => _function!.GetWrapper();
+    
     /// <summary>
-    /// Enable function hook, if exists.
+    /// Set a function to create a <see cref="IReloadedHooks"/> hook with.
+    /// Must be done before scanning has started, during normal mod initialization.
     /// </summary>
-    public void Enable()
-    {
-        if (_hook != null)
-        {
-            _hook?.Enable();
-        }
-        else
-        {
-            Log.Warning($"{nameof(SHFunction<TFunction>)}<{_name}> is a wrapper and can not be enabled.");
-        }
-    }
+    /// <param name="hookFunction">The hook function. If <c>null</c>, no hook will be created.</param>
+    public void SetHook(TFunction? hookFunction) => _hookFunction = hookFunction;
 }
