@@ -22,7 +22,7 @@ public static class StringExtensions
     {
         IDictionary<StringCacheKey, nint> cache = useThreadSafe ? StringCacheSafe : StringCache;
 
-        var key = new StringCacheKey(str, Encoding.ASCII.EncodingName);
+        var key = new StringCacheKey(str, Encoding.ASCII.CodePage);
         if (cache.TryGetValue(key, out var pointer)) return pointer;
         
         cache[key] = Marshal.StringToHGlobalAnsi(str);
@@ -38,7 +38,7 @@ public static class StringExtensions
     {
         IDictionary<StringCacheKey, nint> cache = useThreadSafe ? StringCacheSafe : StringCache;
 
-        var key = new StringCacheKey(str, Encoding.Unicode.EncodingName);
+        var key = new StringCacheKey(str, Encoding.Unicode.CodePage);
         if (cache.TryGetValue(key, out var pointer)) return pointer;
         
         cache[key] = Marshal.StringToHGlobalUni(str);
@@ -55,7 +55,7 @@ public static class StringExtensions
     {
         IDictionary<StringCacheKey, nint> cache = useThreadSafe ? StringCacheSafe : StringCache;
 
-        var key = new StringCacheKey(str, encoding.EncodingName);
+        var key = new StringCacheKey(str, encoding.CodePage);
         if (cache.TryGetValue(key, out var pointer)) return pointer;
         
         var bytes = encoding.GetBytes(str + '\0');
@@ -66,5 +66,5 @@ public static class StringExtensions
     }
 
     // ReSharper disable NotAccessedPositionalProperty.Local
-    private record struct StringCacheKey(string StringText, string StringEncoding);
+    private record struct StringCacheKey(string Content, int CodePage);
 }
