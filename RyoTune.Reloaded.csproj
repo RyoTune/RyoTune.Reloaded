@@ -9,7 +9,6 @@
     <Authors>RyoTune</Authors>
     <Description>Common functionality for Reloaded mods.</Description>
     <RepositoryUrl>https://github.com/RyoTune/RyoTune.Reloaded/</RepositoryUrl>
-    <PackageLicenseUrl>https://opensource.org/license/mit</PackageLicenseUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
