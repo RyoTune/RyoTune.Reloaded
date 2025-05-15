@@ -1,17 +1,28 @@
+
 # RyoTune.Reloaded
 
-Common functionality for Reloaded mods.
+[![NuGet](https://img.shields.io/nuget/v/RyoTune.Reloaded)](https://img.shields.io/nuget/v/RyoTune.Reloaded)
+[![GitHub last commit](https://img.shields.io/github/license/RyoTune/RyoTune.Reloaded)](https://img.shields.io/github/license/RyoTune/RyoTune.Reloaded)
+
+The "utilities" library for my Reloaded mods. Contains any functionality useful for any Reloaded mod, such as logging, simplified function hooking, and more.
+
+# Installation
 
 1. Install `RyoTune.Reloaded` using `NuGet`.
-2. Create or add to a `GlobalUsings.cs` file the following: `global using RyoTune.Reloaded`
-3. In your `Mod.cs` constructor, initialize functionality with: `Project.Initialize(IModConfig modConfig, IModLoader modLoader, ILogger log, bool useAsyncLog = false)`
+2. Create or add to a `GlobalUsings.cs` file the following: `global using RyoTune.Reloaded;`
+3. In your `Mod.cs` constructor, initialize the library with: `Project.Initialize(IModConfig modConfig, IModLoader modLoader, ILogger log, bool useAsyncLog = false)`
 
 Optionally, you can also manually set the color for `Information` log messages: `Project.Initialize(IModConfig modConfig, IModLoader modLoader, ILogger log, Color color, bool useAsyncLog = false)`
+
+
+# Usage
 
 ## SHFunction
 `SHFunction` simplifies the creation of function hooks and/or wrappers, only requiring a function delegate and sig pattern to set up.
 
 A hook can be easily added and enabled by supplying a function implementation in the constructor or separately with `SetHook`.
+
+`SHFunction` uses a `ScanHook`, hence the `SH` in the name, and supports pattern configuration (see below).
 
 ```csharp
 // Basic function wrapper.
@@ -40,10 +51,25 @@ if (_config.BitGetHookEnabled)
 - `pattern` is the sig pattern to search for.
 - `success` is the callback to run, once found. Callbacks are given `IReloadedHooks` and the search result `nint`.
 
+### Pattern Configuration
+All `ScanHook` scans support having their pattern reconfigured through an external file, including by other mods. This is notably useful in adding support for new games to an existing mod, with no need for that mod to change or update.
+
+For mods trying to configure the patterns of another mod, you need to add that mod as a **Mod Dependency**.
+
+**Patterns File:** `MOD_FOLDER/Project/scan-patterns.ini`
+
+```ini
+;[TargetModId]
+;ScanId=NewPattern
+
+[SharedScans.Reloaded]
+criManaPlayer_SetFile=48 83 EC 08 48 89 34 24 48 31 F6 48 8D 64 24 ?? 4C 89 04 24
+criManaPlayer_SetData=48 83 EC 08 48 89 34 24 48 31 F6 48 8D 64 24 ?? 4C 89 04 24
+```
+
 ## String Extensions
 It is very common to need to convert strings to pointers for use in native functions.
 Extension methods have been added to quickly do so, in any encoding, and with caching the result.
-
 
 ```csharp
 "Example".AsPointerAnsi();
@@ -60,3 +86,5 @@ Add functions for logging messages of various levels. `Information` messages wil
 - `Log.Error`
 
 The log level can be changed at any time through the `Log.LogLevel` property.
+
+
