@@ -168,16 +168,26 @@ def getCsharpType(in_type):
     if ("char" in in_type):
       return in_type.replace("char", "byte");
 
+    if ("*64" in in_type):
+      return in_type.replace("*64", "*");
+
     return in_type
 
 def getCsharpArgs(in_func):
-  args = {}
-  for param in in_func.getParameters():
-    args[param.getName()] = getCsharpType(param.getDataType().getName())
+  sortedParams = sorted(in_func.getParameters(), key=lambda param: param.getOrdinal())
+
+  args = []
+  for param in sortedParams:
+    paramName = param.getName()
+
+    if paramName == "this":
+      paramName = "self"
+    
+    args.append({ "name": paramName, "type": getCsharpType(param.getDataType().getName()) })
   return args
 
 def getCsharpFunction(fn_name, fn_ret, fn_args):
-  return "{} {}({})".format(fn_ret, fn_name, ", ".join("{} {}".format(value, key) for key, value in fn_args.items()))
+  return "{} {}({})".format(fn_ret, fn_name, ", ".join("{} {}".format(arg["type"], arg["name"]) for arg in fn_args))
 
 def getReloadedDelegate(fn_name, fn_ret, fn_args):
   return "private delegate {};".format(getCsharpFunction(fn_name, fn_ret, fn_args))
@@ -188,19 +198,19 @@ def getImplName(fn_name):
 def getReloadedImpl(fn_name, fn_ret, fn_args):
   funcSig = getCsharpFunction("{}".format(getImplName(fn_name)), fn_ret, fn_args)
   funcRet = "" if fn_ret == "void" else "return "
-  return "private {}\n{{\n    {}{}!.OriginalFunction({});\n}}".format(funcSig, funcRet, getHookName(fn_name), ", ".join("{}".format(key) for key in fn_args.keys()))
+  return "private {}\n{{\n    {}{}!.Hook!.OriginalFunction({});\n}}".format(funcSig, funcRet, getShName(fn_name), ", ".join("{}".format(arg["name"]) for arg in fn_args))
 
-def getHookName(fn_name):
-  return "_{}Hook".format(fn_name)
+def getShName(fn_name):
+  return "_{}".format(fn_name)
 
 def getReloadedHook(fn_name):
-  return "private IHook<{}>? {};".format(fn_name, getHookName(fn_name))
+  return "private readonly SHFunction<{}>? {};".format(fn_name, getShName(fn_name))
 
 def getScanHook(fn_name, fn_pattern):
-  return "ScanHooks.Add(nameof({}), \"{}\", (hooks, result) => {} = hooks.CreateHook<{}>({}, result).Activate());".format(fn_name, fn_pattern, getHookName(fn_name), fn_name, getImplName(fn_name))
+  return "ScanHooks.Add(nameof({}), \"{}\", (hooks, result) => {} = hooks.CreateHook<{}>({}, result).Activate());".format(fn_name, fn_pattern, getShName(fn_name), fn_name, getImplName(fn_name))
 
 def getSHFunc(fn_name, fn_pattern):
-  return "{} = new SHFunction<{}>({}, \"{}\");".format(getHookName(fn_name), fn_name, getImplName(fn_name), fn_pattern)
+  return "{} = new SHFunction<{}>({}, \"{}\");".format(getShName(fn_name), fn_name, getImplName(fn_name), fn_pattern)
 
 def process(min_length = 1):
   fm = currentProgram.getFunctionManager()
