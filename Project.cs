@@ -1,6 +1,11 @@
 ﻿using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using System.Drawing;
+using RyoTune.Reloaded.Common;
+using RyoTune.Reloaded.Inis;
+using RyoTune.Reloaded.Scans;
+
+// ReSharper disable InconsistentNaming
 
 namespace RyoTune.Reloaded;
 
@@ -10,12 +15,22 @@ namespace RyoTune.Reloaded;
 public static class Project
 {
     private static IModLoader? _modLoader;
+    private static readonly List<IRegisterMod> _modRegisters = [];
 
-    internal static string? Id { get; private set; }
+    /// <summary>
+    /// Project instance.
+    /// </summary>
+    public static Common.Project Instance { get; private set; } = null!;
 
-    internal static string? Name { get; private set; }
+    /// <summary>
+    /// Project scans service.
+    /// </summary>
+    public static IScans Scans { get; private set; } = null!;
 
-    internal static string? Folder { get; private set; }
+    /// <summary>
+    /// Project INI service.
+    /// </summary>
+    public static IIni Inis { get; private set; } = null!;
 
     /// <summary>
     /// Initialize project functionality.
@@ -47,23 +62,25 @@ public static class Project
     private static void InitInternal(IModConfig modConfig, IModLoader modLoader)
     {
         _modLoader = modLoader;
+        
+        Instance = new(_modLoader, modConfig);
+        
+        Inis = new IniService(Instance);
+        _modRegisters.Add(Inis);
+        
+        Scans = new ScansService(Inis, _modLoader);
 
-        Id = modConfig.ModId;
-        Name = modConfig.ModName;
-        Folder = Path.Join(modLoader.GetDirectoryForModId(modConfig.ModId), "Project");
+        try { Directory.CreateDirectory(Instance.ProjectDir); }
+        catch (Exception ex) { Log.Error(ex, "Failed to create project folder."); }
 
-        ScanHooks.Initialize(modLoader);
-        modLoader.ModLoaded += OnModLoaded;
+        _modLoader.ModLoaded += OnModLoaded;
     }
 
-    private static void OnModLoaded(IModV1 mod, IModConfigV1 config)
+    private static void OnModLoaded(IModV1 mod, IModConfigV1 modConfig)
     {
-        if (_modLoader == null || Id == null || !config.ModDependencies.Contains(Id)) return;
+        if (_modLoader == null || !modConfig.ModDependencies.Contains(Instance.Id)) return;
 
-        var modDir = _modLoader.GetDirectoryForModId(config.ModId);
-        var projectDir = Path.Join(modDir, "Project");
-
-        var patternsFile = Path.Join(projectDir, ScanHooks.PATTERNS_FILE);
-        if (File.Exists(patternsFile)) ScanHooks.RegisterPatterns(config.ModName, patternsFile);
+        var modDir = _modLoader.GetDirectoryForModId(modConfig.ModId);
+        foreach (var register in _modRegisters) register.RegisterMod(modConfig.ModId, modConfig.ModName, modDir);
     }
 }
