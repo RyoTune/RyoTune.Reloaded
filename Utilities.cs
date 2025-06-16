@@ -21,4 +21,11 @@ public static class Utilities
     /// The current process base address.
     /// </summary>
     public static readonly nint BaseAddress = Process.GetCurrentProcess().MainModule?.BaseAddress ?? 0;
+    
+    /// <summary>
+    /// Gets the absolute address from a relative address.
+    /// </summary>
+    /// <param name="relAddress">Relative address pointer.</param>
+    /// <returns>Global address.</returns>
+    public static unsafe nint GetGlobalAddress(int* relAddress) => *relAddress + (nint)relAddress + 4;
 }
