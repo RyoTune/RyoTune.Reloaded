@@ -20,8 +20,7 @@ public class SHFunction<TFunction>
     public SHFunction(string pattern)
     {
         _name = typeof(TFunction).Name;
-        
-        ScanHooks.Add(_name, pattern, (hooks, result) =>
+        Project.Scans.AddScanHook(_name, pattern, (result, hooks) =>
         {
             _function = hooks.CreateFunction<TFunction>(result);
             if (_hookFunction != null) Hook = _function.Hook(_hookFunction).Activate();
@@ -36,6 +35,30 @@ public class SHFunction<TFunction>
     /// <param name="pattern">Sig pattern of function.</param>
     public SHFunction(TFunction hookFunction, string pattern) : this(pattern)
         => _hookFunction = hookFunction;
+
+    /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with both a function wrapper
+    /// and function hook.
+    /// </summary>
+    /// <param name="hookFunction">Hook function.</param>
+    public SHFunction(TFunction hookFunction) : this()
+    {
+        _hookFunction = hookFunction;
+    }
+    
+    /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,
+    /// and the option to set a hook separately with <see cref="SetHook"/>.
+    /// </summary>
+    public SHFunction()
+    {
+        _name = typeof(TFunction).Name;
+        Project.Scans.AddScanHook(_name, (result, hooks) =>
+        {
+            _function = hooks.CreateFunction<TFunction>(result);
+            if (_hookFunction != null) Hook = _function.Hook(_hookFunction).Activate();
+        });
+    }
 
     /// <summary>
     /// <see cref="IReloadedHooks"/> instance, if a hook function was set.
