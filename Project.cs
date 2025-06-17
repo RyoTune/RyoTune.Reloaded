@@ -66,7 +66,7 @@ public static class Project
     /// </summary>
     /// <param name="mod">Mod to check.</param>
     /// <returns>Whether the given mod is dependent on this mod.</returns>
-    public static bool IsModDependant(IModConfigV1 mod) => mod.ModDependencies.Any(x => _dependableMods.Contains(x));
+    public static bool IsModDependent(IModConfigV1 mod) => mod.ModDependencies.Any(x => _dependableMods.Contains(x));
 
     private static void InitInternal(IModConfig modConfig, IModLoader modLoader)
     {
