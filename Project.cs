@@ -4,7 +4,7 @@ using System.Drawing;
 using RyoTune.Reloaded.Common;
 using RyoTune.Reloaded.Inis;
 using RyoTune.Reloaded.Scans;
-
+// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
 namespace RyoTune.Reloaded;
@@ -16,6 +16,7 @@ public static class Project
 {
     private static IModLoader? _modLoader;
     private static readonly List<IRegisterMod> _modRegisters = [];
+    private static readonly HashSet<string> _dependableMods = [];
 
     /// <summary>
     /// Project instance.
@@ -59,9 +60,18 @@ public static class Project
         InitInternal(modConfig, modLoader);
     }
 
+    /// <summary>
+    /// Checks whether the given mod is dependent on this mod, including as a sub-dependency.<br/>
+    /// Example: Given <c>Mod A &lt;- Mod B &lt;- Mod C</c>, <c>Mod C</c> would be considered dependent on <c>Mod A</c>.
+    /// </summary>
+    /// <param name="mod">Mod to check.</param>
+    /// <returns>Whether the given mod is dependent on this mod.</returns>
+    public static bool IsModDependant(IModConfigV1 mod) => mod.ModDependencies.Any(x => _dependableMods.Contains(x));
+
     private static void InitInternal(IModConfig modConfig, IModLoader modLoader)
     {
         _modLoader = modLoader;
+        _dependableMods.Add(modConfig.ModId);
         
         Instance = new(_modLoader, modConfig);
         
@@ -78,6 +88,11 @@ public static class Project
 
     private static void OnModLoaded(IModV1 mod, IModConfigV1 modConfig)
     {
+        if (modConfig.ModDependencies.Any(x => _dependableMods.Contains(x)))
+        {
+            _dependableMods.Add(modConfig.ModId);
+        }
+        
         if (_modLoader == null || !modConfig.ModDependencies.Contains(Instance.Id)) return;
 
         var modDir = _modLoader.GetDirectoryForModId(modConfig.ModId);
