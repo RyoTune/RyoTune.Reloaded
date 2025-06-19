@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>4.1.1</Version>
+    <Version>4.1.2</Version>
     <Authors>RyoTune</Authors>
     <Description>Common functionality for Reloaded mods.</Description>
     <RepositoryUrl>https://github.com/RyoTune/RyoTune.Reloaded/</RepositoryUrl>

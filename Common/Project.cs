@@ -16,7 +16,7 @@ public class Project
         Name = modConfig.ModName;
         ModDir = modLoader.GetDirectoryForModId(Id);
         ProjectDir = GetProjectFolder(ModDir);
-        AppId = modLoader.GetAppConfig().AppId;
+        AppId = Path.GetFileNameWithoutExtension(modLoader.GetAppConfig().AppId);
     }
     
     /// <summary>
