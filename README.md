@@ -58,7 +58,7 @@ Mod INIs should be placed at: `MOD_FOLDER/Project/MOD_ID/`
 
 Game-specific mod INIs should be placed at: `MOD_FOLDER/Project/MOD_ID/APP_ID`
 
-**Example:** `MOD_FOLDER/Project/UE.Toolkit.Reloaded/p3r.exe/scans.ini`
+**Example:** `MOD_FOLDER/Project/UE.Toolkit.Reloaded/p3r/scans.ini`
 
 ---
 
