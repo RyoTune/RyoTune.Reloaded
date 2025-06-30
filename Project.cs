@@ -14,7 +14,7 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class Project
 {
-    private static IModLoader? _modLoader;
+    private static IModLoader _modLoader = null!;
     private static readonly List<IRegisterMod> _modRegisters = [];
     private static readonly HashSet<string> _dependableMods = [];
 
@@ -92,8 +92,8 @@ public static class Project
         {
             _dependableMods.Add(modConfig.ModId);
         }
-        
-        if (_modLoader == null || !modConfig.ModDependencies.Contains(Instance.Id)) return;
+
+        if (!IsModDependent(modConfig)) return;
 
         var modDir = _modLoader.GetDirectoryForModId(modConfig.ModId);
         foreach (var register in _modRegisters) register.RegisterMod(modConfig.ModId, modConfig.ModName, modDir);
