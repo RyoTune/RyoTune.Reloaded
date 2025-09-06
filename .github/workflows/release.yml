@@ -8,7 +8,7 @@ on:
 env:
   IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
   RELEASE_TAG: ${{ github.ref_name }}
-  PROJECT_NAME: RyoTune.Reloaded
+  PROJECT_NAME: ./Library/RyoTune.Reloaded
 
 jobs:
   build:
