@@ -1,7 +1,8 @@
-﻿using Reloaded.Mod.Interfaces;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using ILogger = Reloaded.Mod.Interfaces.ILogger;
 
 namespace RyoTune.Reloaded;
 
@@ -28,6 +29,7 @@ public static class Log
         [LogLevel.Error] = Color.Red,
     };
 
+    private static readonly Microsoft.Extensions.Logging.ILogger _mlog = new MLogger();
     private static string _name = "Mod";
     private static ILogger? _log;
     private static bool _useAsync;
@@ -133,6 +135,44 @@ public static class Log
         var bytes = BitConverter.GetBytes(BitConverter.ToUInt32(hash));
         var color = Color.FromArgb(0xFF, bytes[0], bytes[1], bytes[2]).WithMinBrightness(0.85);
         return color;
+    }
+
+    /// <summary>
+    /// Gets the logger as an <see cref="Microsoft.Extensions.Logging.ILogger"/> instance.
+    /// </summary>
+    public static Microsoft.Extensions.Logging.ILogger AsLogger() => _mlog;
+
+    private class MLogger : Microsoft.Extensions.Logging.ILogger
+    {
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            switch (logLevel)
+            {
+                case Microsoft.Extensions.Logging.LogLevel.Trace:
+                    Verbose(formatter(state, exception));
+                    break;
+                case Microsoft.Extensions.Logging.LogLevel.Debug:
+                    Debug(formatter(state, exception));
+                    break;
+                case Microsoft.Extensions.Logging.LogLevel.None:
+                case Microsoft.Extensions.Logging.LogLevel.Information:
+                    Information(formatter(state, exception));
+                    break;
+                case Microsoft.Extensions.Logging.LogLevel.Warning:
+                    Warning(formatter(state, exception));
+                    break;
+                case Microsoft.Extensions.Logging.LogLevel.Error:
+                case Microsoft.Extensions.Logging.LogLevel.Critical:
+                    Error(formatter(state, exception));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+            }
+        }
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
     }
 }
 
