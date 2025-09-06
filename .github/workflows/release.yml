@@ -8,7 +8,7 @@ on:
 env:
   IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
   RELEASE_TAG: ${{ github.ref_name }}
-  PROJECT_NAME: ./Library/RyoTune.Reloaded
+  PROJECT_NAME: RyoTune.Reloaded
 
 jobs:
   build:
@@ -39,11 +39,11 @@ jobs:
     - name: Build
       run: |
         if [ $IS_RELEASE = 'true' ]; then
-          dotnet publish $PROJECT_NAME.csproj -c Release -o build /p:Version=$RELEASE_TAG
-          dotnet pack -c Release /p:Version=$RELEASE_TAG --no-build --output .
+          dotnet publish ./Library/$PROJECT_NAME.csproj -c Release -o build /p:Version=$RELEASE_TAG
+          dotnet pack ./Library/$PROJECT_NAME.csproj -c Release /p:Version=$RELEASE_TAG --no-build --output .
           dotnet nuget push "*.nupkg" --api-key ${{secrets.nuget_api_key}} --source https://api.nuget.org/v3/index.json --skip-duplicate
         else
-          dotnet publish $PROJECT_NAME.csproj -c Release -o build
+          dotnet publish ./Library/$PROJECT_NAME.csproj -c Release -o build
         fi
 
     - name: Zip Build
