@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using IniParser;
 using IniParser.Model;
 
@@ -170,10 +171,10 @@ public class IniService : IIni
         if (value.StartsWith("0x"))
         {
             var integerValue = Convert.ToUInt64(value, 16);
-            return (TValue)Convert.ChangeType(integerValue, typeof(TValue));
+            return (TValue)Convert.ChangeType(integerValue, typeof(TValue), CultureInfo.InvariantCulture);
         }
 
-        return (TValue)Convert.ChangeType(value, typeof(TValue));
+        return (TValue)Convert.ChangeType(value, typeof(TValue), CultureInfo.InvariantCulture);
     }
     
     private record SettingChangedArgs(string IniId, string Name, string? Section, string Value);
