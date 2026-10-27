@@ -1,4 +1,7 @@
-﻿using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
+﻿using System.Diagnostics;
+using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
+
+// ReSharper disable InconsistentNaming
 
 namespace RyoTune.Reloaded;
 
@@ -7,6 +10,8 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class IStartupScannerExtensions
 {
+    private static readonly nint BaseAddress = Process.GetCurrentProcess().MainModule?.BaseAddress ?? 0;
+    
     /// <summary>
     /// Basic pattern scan with logging and callback to execute with successful result.
     /// </summary>
@@ -28,7 +33,7 @@ public static class IStartupScannerExtensions
                 return;
             }
 
-            var address = Utilities.BaseAddress + result.Offset;
+            var address = BaseAddress + result.Offset;
             Log.Information($"\"{name}\" found at: 0x{address:X}");
             onSuccess(address);
         });
@@ -57,7 +62,7 @@ public static class IStartupScannerExtensions
                 return;
             }
 
-            var address = Utilities.BaseAddress + result.Offset;
+            var address = BaseAddress + result.Offset;
             onSuccess(address);
         });
     }

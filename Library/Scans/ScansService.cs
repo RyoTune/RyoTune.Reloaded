@@ -6,6 +6,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 using Reloaded.Mod.Interfaces;
 using RyoTune.Reloaded.Inis;
+using RyoTune.Reloaded.Utilities;
 
 namespace RyoTune.Reloaded.Scans;
 
@@ -169,7 +170,10 @@ public class ScansService : IScans
                 },
                 Functions =
                 {
-                    ["GetGlobalAddress"] = args => (long)Utilities.GetGlobalAddress((int*)(long)args[0].Evaluate()!)
+                    ["ResolveRelativeAddress"] = args => (long)RelativeAddress.Resolve((nint)(long)args[0].Evaluate()!),
+#pragma warning disable CS0618 // Backwards compatibility with existing scans.
+                    ["GetGlobalAddress"] = args => (long)RelativeAddress.GetGlobalAddress((int*)(long)args[0].Evaluate()!)
+#pragma warning restore CS0618
                 }
             };
 
