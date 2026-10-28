@@ -170,9 +170,9 @@ public class ScansService : IScans
                 },
                 Functions =
                 {
-                    ["ResolveRelativeAddress"] = args => (long)RelativeAddress.Resolve((nint)(long)args[0].Evaluate()!),
+                    ["ResolveRelativeAddress"] = args => (long)RelativeAddress.Resolve((nint)(long)args.Evaluate(0)!),
 #pragma warning disable CS0618 // Backwards compatibility with existing scans.
-                    ["GetGlobalAddress"] = args => (long)RelativeAddress.GetGlobalAddress((int*)(long)args[0].Evaluate()!)
+                    ["GetGlobalAddress"] = args => (long)RelativeAddress.GetGlobalAddress((int*)(long)args.Evaluate(0)!)
 #pragma warning restore CS0618
                 }
             };
