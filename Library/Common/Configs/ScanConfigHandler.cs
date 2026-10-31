@@ -21,6 +21,7 @@ internal class ScanConfigHandler(IScans scans) : IConfigHandler
         {
             var iniData = SettingsConfigHandler.IniParser.ReadFile(newConfigFile);
             var scansSection = iniData.ToSection("Scans");
+            
             foreach (var (scanId, value) in scansSection)
             {
                 if (scanId.EndsWith(ResultSettingTag)) continue;
@@ -32,6 +33,8 @@ internal class ScanConfigHandler(IScans scans) : IConfigHandler
                 }
                 
                 scansSection.TryGetValue($"{scanId}{ResultSettingTag}", out var transform);
+                
+                scans.ResetScanCandidates(scanId);
                 scans.AddScanCandidate(scanId, new ScanCandidate { Pattern = value, Transform = transform });
             }
         }
@@ -49,6 +52,7 @@ internal class ScanConfigHandler(IScans scans) : IConfigHandler
                 if (scanEntry.Required != null)
                     scans.SetScanRequired(scanId, scanEntry.Required.Value);
                 
+                scans.ResetScanCandidates(scanId);
                 foreach (var candidate in scanEntry.Candidates)
                     if (candidate.Pattern != null) scans.AddScanCandidate(scanId, candidate);
             }

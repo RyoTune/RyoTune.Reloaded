@@ -20,7 +20,7 @@ public interface IScans
     /// Add a scan.
     /// </summary>
     /// <param name="id">Scan ID.</param>
-    /// <param name="onSuccess">Callback given scan result and hooks, if successful.</param>
+    /// <param name="onSuccess">Callback given a scan result and hooks, if successful.</param>
     /// <param name="onFail">Callback on scan failure.</param>
     void AddScanHook(string id, Action<nint, IReloadedHooks> onSuccess, Action? onFail = null);
 
@@ -38,7 +38,7 @@ public interface IScans
     /// </summary>
     /// <param name="id">Scan ID.</param>
     /// <param name="pattern">Initial scan pattern, if any.</param>
-    /// <param name="onSuccess">Callback given scan result and hooks, if successful.</param>
+    /// <param name="onSuccess">Callback given a scan result and hooks, if successful.</param>
     /// <param name="onFail">Callback on scan failure.</param>
     void AddScanHook(string id, string? pattern, Action<nint, IReloadedHooks> onSuccess, Action? onFail = null);
 
@@ -75,6 +75,12 @@ public interface IScans
     /// <param name="id">Scan ID.</param>
     /// <param name="candidate">Scan candidate.</param>
     void AddScanCandidate(string id, ScanCandidate candidate);
+
+    /// <summary>
+    /// Reset all scan candidates.
+    /// </summary>
+    /// <param name="id">ID of scan to reset.</param>
+    void ResetScanCandidates(string id);
     
     /// <summary>
     /// Remove a scan.

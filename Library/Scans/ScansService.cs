@@ -199,6 +199,13 @@ public class ScansService : IScans
     public void RemoveScan(string id) => _scans.Remove(id);
 
     /// <inheritdoc />
+    public void ResetScanCandidates(string id)
+    {
+        var scan = CreateOrGetScan(id);
+        scan.ResetCandidates();
+    }
+
+    /// <inheritdoc />
     public void SetScanRequired(string id, bool required)
     {
         var scan = CreateOrGetScan(id);

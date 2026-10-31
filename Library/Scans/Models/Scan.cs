@@ -29,6 +29,8 @@ internal class Scan(ScanFilter filter)
     
     public void AddReceiver(Action<nint> onSuccess, Action? onFailure)
         => _receivers.Add(new(onSuccess, onFailure));
+    
+    public void ResetCandidates() => _candidates.Clear();
 
     public void SetCandidateResult(ScanCandidateResult result)
     {
