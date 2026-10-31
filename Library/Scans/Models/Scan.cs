@@ -47,6 +47,12 @@ internal class Scan(ScanFilter filter)
 
     private bool IsValid(ScanCandidate candidate)
     {
+        if (string.IsNullOrWhiteSpace(candidate.Pattern))
+        {
+            Log.Error($"Invalid scan candidate: {candidate}");
+            return false;
+        }
+        
         var conditions = candidate.If;
         if (conditions == null) return true;
 
