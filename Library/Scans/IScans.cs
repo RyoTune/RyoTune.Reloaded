@@ -94,4 +94,10 @@ public interface IScans
     /// <param name="id">ID of a scan to set.</param>
     /// <param name="required">Whether an error will be logged if the scan fails.</param>
     void SetScanRequired(string id, bool required);
+
+    /// <summary>
+    /// Whether a scan exists.
+    /// </summary>
+    /// <param name="id">Scan ID.</param>
+    bool HasScan(string id);
 }

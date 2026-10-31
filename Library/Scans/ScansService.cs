@@ -205,6 +205,9 @@ public class ScansService : IScans
         var scan = CreateOrGetScan(id);
         scan.IsRequired = required;
     }
+    
+    /// <inheritdoc />
+    public bool HasScan(string id) => _scans.ContainsKey(id);
 
     private Scan CreateOrGetScan(string id)
     {
