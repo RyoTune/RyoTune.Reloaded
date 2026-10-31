@@ -113,11 +113,11 @@ public class ScansService : IScans
             {
                 if (scan.IsRequired)
                 {
-                    if (scan.Candidates.Count == 0)
-                        Log.Error($"'{id}' had no scan candidates.");
-                    else
-                        Log.Error($"'{id}' was not found with any scan. Candidates:\n" +
-                                  string.Join("\n- ", scan.Candidates.Select(x => x.Name ?? x.Pattern)));
+                    Log.Error(scan.Candidates.Count == 0
+                        ? $"'{id}' had no scan candidates."
+                        : $"'{id}' was not found with any scan. Candidates:");
+                    foreach (var candidate in scan.Candidates)
+                        Log.Error($"  - {candidate.Name ?? candidate.Pattern}");
                 }
                 
                 foreach (var receiver in scan.Receivers) receiver.OnFailure?.Invoke();
