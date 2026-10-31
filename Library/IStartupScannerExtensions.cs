@@ -10,7 +10,7 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class IStartupScannerExtensions
 {
-    private static readonly nint BaseAddress = Process.GetCurrentProcess().MainModule?.BaseAddress ?? 0;
+    internal static readonly nint BaseAddress = Process.GetCurrentProcess().MainModule?.BaseAddress ?? 0;
     
     /// <summary>
     /// Basic pattern scan with logging and callback to execute with successful result.

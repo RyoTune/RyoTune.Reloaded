@@ -1,9 +1,10 @@
 using Reloaded.Hooks.Definitions;
+using RyoTune.Reloaded.Scans.Models;
 
 namespace RyoTune.Reloaded.Scans;
 
 /// <summary>
-/// Scans service interface.
+/// Scans service.
 /// </summary>
 public interface IScans
 {
@@ -62,10 +63,29 @@ public interface IScans
     void AddScanHook(string id, nint defaultResult, Action<nint, IReloadedHooks> onSuccess, Action? onFail = null);
 
     /// <summary>
-    /// Add a scan listener.
+    /// Add a scan candidate.
     /// </summary>
     /// <param name="id">Scan ID.</param>
-    /// <param name="onSuccess">Callback given scan result, if successful.</param>
-    /// <param name="onFail">Callback on scan failure.</param>
-    void AddListener(string id, Action<nint> onSuccess, Action? onFail = null);
+    /// <param name="pattern">Scan pattern.</param>
+    void AddScanCandidate(string id, string pattern);
+    
+    /// <summary>
+    /// Add a scan candidate.
+    /// </summary>
+    /// <param name="id">Scan ID.</param>
+    /// <param name="candidate">Scan candidate.</param>
+    void AddScanCandidate(string id, ScanCandidate candidate);
+    
+    /// <summary>
+    /// Remove a scan.
+    /// </summary>
+    /// <param name="id">ID of scan to remove.</param>
+    void RemoveScan(string id);
+    
+    /// <summary>
+    /// Set whether a scan is required.
+    /// </summary>
+    /// <param name="id">ID of a scan to set.</param>
+    /// <param name="required">Whether an error will be logged if the scan fails.</param>
+    void SetScanRequired(string id, bool required);
 }

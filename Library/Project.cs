@@ -2,8 +2,10 @@
 using Reloaded.Mod.Interfaces.Internal;
 using System.Drawing;
 using RyoTune.Reloaded.Common;
-using RyoTune.Reloaded.Inis;
+using RyoTune.Reloaded.Common.Configs;
 using RyoTune.Reloaded.Scans;
+using RyoTune.Reloaded.Serialization.Yaml.Interfaces;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
@@ -31,7 +33,7 @@ public static class Project
     /// <summary>
     /// Project INI service.
     /// </summary>
-    public static IIni Inis { get; private set; } = null!;
+    public static ISettings Settings { get; private set; } = null!;
 
     /// <summary>
     /// Initialize project functionality.
@@ -74,13 +76,19 @@ public static class Project
         _dependableMods.Add(modConfig.ModId);
         
         Instance = new(_modLoader, modConfig);
+        Scans = new ScansService(_modLoader);
         
-        Inis = new IniService(Instance);
-        _modRegisters.Add(Inis);
+        modLoader.GetController<IYamlDeserializer>().TryGetTarget(out var yamlDeserializer);
+        var configScans = new ScanConfigHandler(Scans) { YamlDeserializer = yamlDeserializer };
+        var configSettings = new SettingsConfigHandler { YamlDeserializer = yamlDeserializer };
+        Settings = configSettings;
         
-        Scans = new ScansService(Inis, _modLoader);
+        var configService = new ProjectConfigService(Instance);
+        configService.AddHandler(configScans);
+        configService.AddHandler(configSettings);
+        _modRegisters.Add(configService);
 
-        try { Directory.CreateDirectory(Instance.ProjectDir); }
+        try { Directory.CreateDirectory(Instance.Directories.ProjectDirectory); }
         catch (Exception ex) { Log.Error(ex, "Failed to create project folder."); }
 
         _modLoader.ModLoaded += OnModLoaded;
@@ -96,6 +104,6 @@ public static class Project
         if (!IsModDependent(modConfig)) return;
 
         var modDir = _modLoader.GetDirectoryForModId(modConfig.ModId);
-        foreach (var register in _modRegisters) register.RegisterMod(modConfig.ModId, modConfig.ModName, modDir);
+        foreach (var register in _modRegisters) register.RegisterMod(modConfig);
     }
 }

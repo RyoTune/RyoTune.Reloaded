@@ -1,6 +1,6 @@
 namespace RyoTune.Reloaded.Scans.Models;
 
-internal class ScanCandidateFilter
+public class ScanCandidateFilter
 {
     public HashSet<string>? FileMd5 { get; init; } = [];
 

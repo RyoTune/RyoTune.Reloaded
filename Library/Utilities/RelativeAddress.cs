@@ -122,5 +122,5 @@ public static class RelativeAddress
     /// <param name="relAddress">Relative address pointer.</param>
     /// <returns>Global address.</returns>
     [Obsolete("Use Resolve(nint instruction) instead.")]
-    public static unsafe nint GetGlobalAddress(int* relAddress) => *relAddress + (nint)relAddress + 4;
+    public static unsafe nint GetGlobalAddress(nint relAddress) => *(int*)relAddress + relAddress + 4;
 }

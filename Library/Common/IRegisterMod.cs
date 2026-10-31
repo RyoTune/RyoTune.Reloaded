@@ -1,3 +1,5 @@
+using Reloaded.Mod.Interfaces.Internal;
+
 namespace RyoTune.Reloaded.Common;
 
 /// <summary>
@@ -6,10 +8,8 @@ namespace RyoTune.Reloaded.Common;
 public interface IRegisterMod
 {
     /// <summary>
-    /// Register mod.
+    /// Register a mod.
     /// </summary>
-    /// <param name="modId">Mod ID.</param>
-    /// <param name="modName">Mod name.</param>
-    /// <param name="modDir">Mod directory.</param>
-    void RegisterMod(string modId, string modName, string modDir);
+    /// <param name="mod">The mod to register.</param>
+    void RegisterMod(IModConfigV1 mod);
 }

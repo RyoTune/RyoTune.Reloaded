@@ -1,4 +1,5 @@
 using Reloaded.Mod.Interfaces;
+using Reloaded.Mod.Interfaces.Internal;
 
 namespace RyoTune.Reloaded.Common;
 
@@ -7,16 +8,19 @@ namespace RyoTune.Reloaded.Common;
 /// </summary>
 public class Project
 {
+    private readonly IModLoader _modLoader;
+
     /// <summary/>
-    /// <param name="modLoader"></param>
-    /// <param name="modConfig"></param>
-    public Project(IModLoader modLoader, IModConfig modConfig)
+    public Project(IModLoader modLoader, IModConfig projectMod)
     {
-        Id = modConfig.ModId;
-        Name = modConfig.ModName;
-        ModDir = modLoader.GetDirectoryForModId(Id);
-        ProjectDir = GetProjectFolder(ModDir);
+        _modLoader = modLoader;
+        
         AppId = Path.GetFileNameWithoutExtension(modLoader.GetAppConfig().AppId);
+        Id = projectMod.ModId;
+        Name = projectMod.ModName;
+        ModDir = modLoader.GetDirectoryForModId(Id);
+        
+        Directories = GetProjectDirectoriesInMod(projectMod);
     }
     
     /// <summary>
@@ -30,9 +34,9 @@ public class Project
     public string Name { get; }
 
     /// <summary>
-    /// Project folder within mod folder.
+    /// Project directories.
     /// </summary>
-    public string ProjectDir { get; }
+    public ProjectDirectories Directories { get; }
 
     /// <summary>
     /// Project mod folder.
@@ -45,9 +49,15 @@ public class Project
     public string AppId { get; }
 
     /// <summary>
-    /// Gets the expected project folder path within the base directory.
+    /// Get this project's folders within a mod.
     /// </summary>
-    /// <param name="baseDir">Base directory.</param>
-    /// <returns>Project folder within base directory.</returns>
-    public string GetProjectFolder(string baseDir) => Path.Join(baseDir, "Project", Id);
+    public ProjectDirectories GetProjectDirectoriesInMod(IModConfigV1 mod)
+    {
+        var modDir = _modLoader.GetDirectoryForModId(mod.ModId);
+        var projectDir = Path.Join(modDir, "Project", Id);
+        var projectAppDir = Path.Join(projectDir, AppId);
+        return new(projectDir, projectAppDir);
+    }
+
+    public record ProjectDirectories(string ProjectDirectory, string ProjectAppDirectory);
 }

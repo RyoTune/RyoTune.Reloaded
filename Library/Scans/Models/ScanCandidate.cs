@@ -1,6 +1,6 @@
 namespace RyoTune.Reloaded.Scans.Models;
 
-internal class ScanCandidate
+public class ScanCandidate
 {
     public string? Name { get; init; }
     
