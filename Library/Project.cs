@@ -16,6 +16,7 @@ namespace RyoTune.Reloaded;
 /// </summary>
 public static class Project
 {
+    private static IModConfig _selfModConfig = null!;
     private static IModLoader _modLoader = null!;
     private static readonly List<IRegisterMod> _modRegisters = [];
     private static readonly HashSet<string> _dependableMods = [];
@@ -73,6 +74,7 @@ public static class Project
     private static void InitInternal(IModConfig modConfig, IModLoader modLoader)
     {
         _modLoader = modLoader;
+        _selfModConfig = modConfig;
         _dependableMods.Add(modConfig.ModId);
         
         Instance = new(_modLoader, modConfig);
@@ -81,8 +83,11 @@ public static class Project
         IYamlDeserializer? yamlDeserializer = null;
 
         if (modConfig.ModDependencies.Any(x => x == "RyoTune.Reloaded.Serialization.Yaml"))
-            modLoader.GetController<IYamlDeserializer>().TryGetTarget(out yamlDeserializer);
-        
+        {
+            modLoader.GetController<IReloadedYaml>().TryGetTarget(out var reloadedYaml);
+            yamlDeserializer = reloadedYaml!.CreateDeserializer();
+        }
+
         var configScans = new ScanConfigHandler(Scans) { YamlDeserializer = yamlDeserializer };
         var configSettings = new SettingsConfigHandler { YamlDeserializer = yamlDeserializer };
         Settings = configSettings;
@@ -91,6 +96,9 @@ public static class Project
         configService.AddHandler(configScans);
         configService.AddHandler(configSettings);
         _modRegisters.Add(configService);
+        
+        // Register self.
+        RegisterMod(_selfModConfig);
 
         try { Directory.CreateDirectory(Instance.Directories.ProjectDirectory); }
         catch (Exception ex) { Log.Error(ex, "Failed to create project folder."); }
@@ -100,13 +108,19 @@ public static class Project
 
     private static void OnModLoaded(IModV1 mod, IModConfigV1 modConfig)
     {
+        if (ReferenceEquals(modConfig, _selfModConfig)) return;
+        
         if (modConfig.ModDependencies.Any(x => _dependableMods.Contains(x)))
         {
             _dependableMods.Add(modConfig.ModId);
         }
 
         if (!IsModDependent(modConfig)) return;
+        RegisterMod(modConfig);
+    }
 
+    private static void RegisterMod(IModConfigV1 modConfig)
+    {
         var modDir = _modLoader.GetDirectoryForModId(modConfig.ModId);
         foreach (var register in _modRegisters) register.RegisterMod(modConfig);
     }

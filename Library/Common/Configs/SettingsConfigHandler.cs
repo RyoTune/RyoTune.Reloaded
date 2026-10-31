@@ -26,7 +26,7 @@ internal class SettingsConfigHandler : ISettings, IConfigHandler
     /// <inheritdoc />
     public bool CanHandle(string configId) => true;
 
-    public IYamlDeserializer? YamlDeserializer { get; set; }
+    public IYamlDeserializer? YamlDeserializer { get; init; }
 
     /// <inheritdoc />
     public void Handle(string configId, string newConfigFile)
