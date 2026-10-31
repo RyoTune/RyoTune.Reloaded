@@ -20,7 +20,6 @@ public class ScansService : IScans
 #pragma warning restore CS0618
     };
     
-    private readonly IModLoader _modLoader;
     private readonly IStartupScanner _scanner;
     private readonly IReloadedHooks _hooks;
 
@@ -28,22 +27,29 @@ public class ScansService : IScans
     private readonly ScanFilter _scanFilter;
     private int _numTotalCandidates;
     private int _numCompletedCandidates;
+
+    private readonly int _numTotalMods;
+    private int _numLoadedMods;
     
     /// <summary/>
     public ScansService(IModLoader modLoader)
     {
-        _modLoader = modLoader;
+        _numTotalMods = modLoader.GetAppConfig().EnabledMods.Length;
         _scanFilter = new(modLoader.GetAppConfig().AppLocation);
-        _modLoader.GetController<IStartupScanner>().TryGetTarget(out _scanner!);
-        _modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks!);
-        
+        modLoader.GetController<IStartupScanner>().TryGetTarget(out _scanner!);
+        modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks!);
         modLoader.ModLoaded += OnModLoaded;
     }
 
     private void OnModLoaded(IModV1 _, IModConfigV1 __)
     {
-        RegisterScans();
-        _modLoader.ModLoaded -= OnModLoaded;
+        _numLoadedMods++;
+        
+        // Jank workaround for the fact IStartupScanner will not register
+        // new scans after its OnModLoaderInitialized callback runs, which
+        // will always be after any dependent mod...
+        // So, we'll just register scans right after the last mod loads :)
+        if (_numLoadedMods == _numTotalMods) RegisterScans();
     }
     
     private bool TryResolveResultValue(ScanCandidateResult result, out nint value)

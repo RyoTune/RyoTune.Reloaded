@@ -77,8 +77,12 @@ public static class Project
         
         Instance = new(_modLoader, modConfig);
         Scans = new ScansService(_modLoader);
+
+        IYamlDeserializer? yamlDeserializer = null;
+
+        if (modConfig.ModDependencies.Any(x => x == "RyoTune.Reloaded.Serialization.Yaml"))
+            modLoader.GetController<IYamlDeserializer>().TryGetTarget(out yamlDeserializer);
         
-        modLoader.GetController<IYamlDeserializer>().TryGetTarget(out var yamlDeserializer);
         var configScans = new ScanConfigHandler(Scans) { YamlDeserializer = yamlDeserializer };
         var configSettings = new SettingsConfigHandler { YamlDeserializer = yamlDeserializer };
         Settings = configSettings;
