@@ -11,6 +11,30 @@ public class SHFunction<TFunction>
     private readonly string _name;
     private IFunction<TFunction>? _function;
     private TFunction? _hookFunction;
+
+    /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,
+    /// and the option to set a hook separately with <see cref="SetHook"/>.
+    /// </summary>
+    /// <param name="address">Address of function.</param>
+    public SHFunction(nint address)
+    {
+        _name = typeof(TFunction).Name;
+        Project.Scans.AddScanHook(_name, address, (result, hooks) =>
+        {
+            _function = hooks.CreateFunction<TFunction>(result);
+            if (_hookFunction != null) Hook = _function.Hook(_hookFunction).Activate();
+        });
+    }
+    
+    /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with both a function wrapper
+    /// and function hook.
+    /// </summary>
+    /// <param name="hookFunction">Hook function.</param>
+    /// <param name="address">Address of function.</param>
+    public SHFunction(TFunction hookFunction, nint address) : this(address)
+        => _hookFunction = hookFunction;
     
     /// <summary>
     /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,
@@ -35,16 +59,6 @@ public class SHFunction<TFunction>
     /// <param name="pattern">Sig pattern of function.</param>
     public SHFunction(TFunction hookFunction, string pattern) : this(pattern)
         => _hookFunction = hookFunction;
-
-    /// <summary>
-    /// Creates a <see cref="SHFunction{TFunction}"/> with both a function wrapper
-    /// and function hook.
-    /// </summary>
-    /// <param name="hookFunction">Hook function.</param>
-    public SHFunction(TFunction hookFunction) : this()
-    {
-        _hookFunction = hookFunction;
-    }
     
     /// <summary>
     /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,

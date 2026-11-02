@@ -138,6 +138,10 @@ public class ScansService : IScans
                 _numTotalCandidates++;
             }
         }
+
+        // Direct-address registrations have no pattern candidates.
+        if (_numTotalCandidates == 0)
+            BroadcastScans();
     }
 
     /// <inheritdoc />
