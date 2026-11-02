@@ -55,6 +55,13 @@ public class SHFunction<TFunction>
         => _hookFunction = hookFunction;
     
     /// <summary>
+    /// Creates a <see cref="SHFunction{TFunction}"/> with both a function wrapper
+    /// and function hook.
+    /// </summary>
+    /// <param name="hookFunction">Hook function.</param>
+    public SHFunction(TFunction hookFunction) : this() => _hookFunction = hookFunction;
+
+    /// <summary>
     /// Creates a <see cref="SHFunction{TFunction}"/> with only a function wrapper,
     /// and the option to set a hook separately with <see cref="SetQueuedHook"/>.
     /// </summary>
